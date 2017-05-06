@@ -25,8 +25,30 @@ pks_Entry::~pks_Entry( )
 #endif
 }
 
+pks_Agent::pks_Agent( )
+{
+#ifdef _DEBUG2_
+   printf("Agent instantiated \n");
+#endif
+}
+
+pks_Agent::~pks_Agent( )
+{
+   entries.clear();
+
+#ifdef _DEBUG2_
+   printf("Agent deconstructed \n");
+#endif
+}
+
+
+
+
 pks_Dataset::pks_Dataset( int id_, char *fname_ )
 {
+#ifdef _DEBUG_
+   printf("Dataset instantiated\n");
+#endif
    id = id_;
 
    memset( fname, '\0', FILENAME_SIZE );
@@ -40,7 +62,11 @@ pks_Dataset::pks_Dataset( int id_, char *fname_ )
 
 pks_Dataset::~pks_Dataset()
 {
-
+   agents.clear();
+   entries.clear();
+#ifdef _DEBUG_
+   printf("Dataset deconstructed\n");
+#endif
 }
 
 int pks_Dataset::read( void )
@@ -167,6 +193,72 @@ int pks_Dataset::filterEntries( void )
    return(0);
 }
 
+int pks_Dataset::makeAgents( void )
+{
+   if( entries.size() == 0 ) {
+      printf("Dataset has no data from which to infer agents/subjects\n");
+      return(1);
+   }
+
+   if( agents.size() != 0 ) {
+      printf("Dataset already agents/subjects; will re-create them.\n");
+
+      printf("Agents vetor size before clear: %ld \n", agents.size() );
+      agents.clear();
+   }
+
+   printf("Creating agents\n");
+
+   int ne = entries.size();
+   for(int n=0;n<ne;++n) {
+      int isubject = entries[n].isubject;
+      int ifound = -1;
+
+      int na = agents.size();
+      int m=0;
+      while( m < na ) {
+         if( agents[m].id == isubject ) {
+            ifound = m;
+            m = na;    // terminate the loop over existing agents
+         }
+         ++m;
+      }
+
+      if( ifound == -1 ) {
+         pks_Agent a;
+         a.id = isubject;
+         agents.push_back( a );
+         agents[ agents.size() - 1 ].entries.push_back( &(entries[n]) );
+      } else {
+         agents[ ifound ].entries.push_back( &(entries[n]) );
+      }
+   }
+
+#ifdef _DEBUG_
+   int na = agents.size();
+   for(int n=0;n<na;++n) {
+      printf(" Agent %d, subject_no %d, entries %ld \n",
+             n, agents[n].id, agents[n].entries.size() );
+#ifdef _DEBUG2_
+   // IN THE EVENT THAT WE USE A LIST (TO BE REMOVED)
+   // pks_Entry :: iterator ei;
+   // for( ei = agents[n].entries.begin();
+   //      ei != agents[n].entries.end(); ++ei ) {
+   //     printf("   Entry pointer %p, condition %d, dt= %lf \n",
+   //                ei, (*ei).icondition, (ei).dt );
+      for(int i=0;i<agents[n].entries.size();++i) {
+          printf("   Entry pointer %p, condition %d, dt= %lf \n",
+                     agents[n].entries[i],
+                     agents[n].entries[i]->icondition,
+                     agents[n].entries[i]->dt );
+      }
+#endif
+   }
+#endif
+
+   return(0);
+}
+
 //---------------- driver related functions ------------------
 
 //
@@ -214,6 +306,9 @@ int driver()
 
    // fitler based on thresholds
    ierr = d.filterEntries();
+
+   // create the agent/subject objects for this dataset
+   ierr = d.makeAgents();
 
    return(0);
 }

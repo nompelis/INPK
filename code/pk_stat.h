@@ -72,6 +72,7 @@ class pks_Dataset {
    int write( char *out_fname ) const;
    int resetEntries( void );
    int filterEntries( void );
+   int makeAgents( void );
 
  private:
 
