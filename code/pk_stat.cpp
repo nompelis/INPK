@@ -30,6 +30,8 @@ pks_Dataset::pks_Dataset( int id_, char *fname_ )
    memset( fname, '\0', FILENAME_SIZE );
    if( fname_ != NULL ) sprintf( fname, "%s", fname_ );
 
+   low_thres = -1.0;
+   high_thres = -1.0;
 }
 
 pks_Dataset::~pks_Dataset()
@@ -120,6 +122,29 @@ int pks_Dataset::write( char *fname_out ) const
 }
 
 
+int enter_thresholds( pks_Dataset & d )
+{
+   double lowt,hight;
+   int idone = 1;
+
+   while( idone != 0 ) {
+      printf("Enter thresholds (low and high) separated by a space:\n");
+      scanf("%lf %lf", &lowt, &hight );
+      printf("You have entered: low %lf high %lf \n", lowt,hight );
+
+      if( lowt > 0.0 && hight > lowt ) {
+         idone = 0;
+      } else {
+         printf("The thresholds you provided do not make sense. Retry.\n");
+      }
+   }
+
+   d.low_thres = lowt;
+   d.high_thres = hight;
+
+   return(0);
+}
+
 
 
 int driver()
@@ -131,8 +156,7 @@ int driver()
    ierr = d.read();
    ierr = d.write( (char *) "crap.csv" );
 
-int icrap;
-scanf("%d", &icrap );
+   enter_thresholds( d );
 
    return(0);
 }

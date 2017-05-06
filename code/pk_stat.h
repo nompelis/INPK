@@ -46,10 +46,12 @@ class pks_Dataset {
     char fname[FILENAME_SIZE];
     char header[LINE_SIZE];
     std::vector< pks_Entry > entries;
-
+    double low_thres,high_thres;
 
     int read( void );
     int write( char *out_fname ) const;
+
+ private:
 
 };
 
