@@ -21,17 +21,17 @@ extern "C" {
 //
 class pks_Entry {
  public:
-    pks_Entry();
-    ~pks_Entry();
+   pks_Entry();
+   ~pks_Entry();
 
-    int id;
+   int id;
 
-    int isubject;
-    int icondition;
-    double dt;
-    int item;
+   int isubject;
+   int icondition;
+   double dt;
+   int item;
 
-    int istate;
+   int istate;
 };
 
 //
@@ -43,7 +43,7 @@ class pks_Agent {
    virtual ~pks_Agent();
 
    int id;
- //std::list< double > idata;
+   std::vector< pks_Entry * > entries;
 
  protected:
 
@@ -57,21 +57,21 @@ class pks_Agent {
 //
 class pks_Dataset {
  public:
-    pks_Dataset( int id_, char *fname );
-    ~pks_Dataset();
+   pks_Dataset( int id_, char *fname );
+   ~pks_Dataset();
 
-    int id;
-    char fname[FILENAME_SIZE];
-    char header[LINE_SIZE];
-    std::vector< pks_Entry > entries;
-    double low_thres,high_thres;
-    int nlow,nhigh;
-    std::vector< pks_Agent > agents;
+   int id;
+   char fname[FILENAME_SIZE];
+   char header[LINE_SIZE];
+   std::vector< pks_Entry > entries;
+   double low_thres,high_thres;
+   int nlow,nhigh;
+   std::vector< pks_Agent > agents;
 
-    int read( void );
-    int write( char *out_fname ) const;
-    int resetEntries( void );
-    int filterEntries( void );
+   int read( void );
+   int write( char *out_fname ) const;
+   int resetEntries( void );
+   int filterEntries( void );
 
  private:
 
