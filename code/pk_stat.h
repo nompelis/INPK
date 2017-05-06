@@ -31,6 +31,7 @@ class pks_Entry {
     double dt;
     int item;
 
+    int istate;
 };
 
 
@@ -47,9 +48,12 @@ class pks_Dataset {
     char header[LINE_SIZE];
     std::vector< pks_Entry > entries;
     double low_thres,high_thres;
+    int nlow,nhigh;
 
     int read( void );
     int write( char *out_fname ) const;
+    int resetEntries( void );
+    int filterEntries( void );
 
  private:
 

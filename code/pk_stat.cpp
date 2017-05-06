@@ -14,6 +14,8 @@ pks_Entry::pks_Entry( )
 #ifdef _DEBUG2_
    printf("Entry instantiated\n");
 #endif
+
+   istate = 0;
 }
 
 pks_Entry::~pks_Entry( )
@@ -32,6 +34,8 @@ pks_Dataset::pks_Dataset( int id_, char *fname_ )
 
    low_thres = -1.0;
    high_thres = -1.0;
+   nlow = 0;
+   nhigh = 0;
 }
 
 pks_Dataset::~pks_Dataset()
@@ -121,7 +125,53 @@ int pks_Dataset::write( char *fname_out ) const
    return(0);
 }
 
+int pks_Dataset::resetEntries( void )
+{
+   int ne = entries.size();
 
+   for(int n=0;n<ne;++n) entries[n].istate = 0;
+   nlow=0;
+   nhigh=0;
+
+   return(0);
+}
+
+
+int pks_Dataset::filterEntries( void )
+{
+   if( low_thres <= 0.0 || high_thres <= 0.0 ) {
+      printf("Thresholds are non-sensical: low %lf  high %lf. Operation failed\n", low_thres, high_thres);
+      return(1);
+   }
+
+   nlow=0;
+   nhigh=0;
+   int ne = entries.size();
+   for(int n=0;n<ne;++n) {
+
+      if( entries[n].dt < low_thres ) {
+         entries[n].istate = -1;
+         nlow += 1;
+      }
+
+      if( entries[n].dt > high_thres ) {
+         entries[n].istate = +1;
+         nhigh += 1;
+      }
+   }
+
+   printf("After threshold-filtering %d entries...\n", ne );
+   printf("   %d were found below the low threshold \n", nlow );
+   printf("   %d were found above the high threshold \n", nhigh );
+
+   return(0);
+}
+
+//---------------- driver related functions ------------------
+
+//
+// Function for the user to enter thresholds
+//
 int enter_thresholds( pks_Dataset & d )
 {
    double lowt,hight;
@@ -150,13 +200,20 @@ int enter_thresholds( pks_Dataset & d )
 int driver()
 {
    int ierr=0;
+
+   // create a dataset object
    pks_Dataset d( 0, NULL );
 
+   // assign a filename and read (and test-write) it
    sprintf( d.fname, "sample.csv" );
    ierr = d.read();
    ierr = d.write( (char *) "crap.csv" );
 
+   // ask user for thresholds
    enter_thresholds( d );
+
+   // fitler based on thresholds
+   ierr = d.filterEntries();
 
    return(0);
 }
