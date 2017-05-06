@@ -34,6 +34,23 @@ class pks_Entry {
     int istate;
 };
 
+//
+// Object that is a subject in the study
+//
+class pks_Agent {
+ public:
+   pks_Agent();
+   virtual ~pks_Agent();
+
+   int id;
+ //std::list< double > idata;
+
+ protected:
+
+ private:
+
+};
+
 
 //
 // Object that is a dataset in the study
@@ -49,6 +66,7 @@ class pks_Dataset {
     std::vector< pks_Entry > entries;
     double low_thres,high_thres;
     int nlow,nhigh;
+    std::vector< pks_Agent > agents;
 
     int read( void );
     int write( char *out_fname ) const;
@@ -59,24 +77,6 @@ class pks_Dataset {
 
 };
 
-
-
-//
-// Object that is a subject in the study
-//
-class pks_Agent {
- public:
-    pks_Agent();
-    ~pks_Agent();
-
-    int id;
-    std::list< double > idata;
-
- protected:
-
- private:
-
-};
 
 
 
