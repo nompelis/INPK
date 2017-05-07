@@ -25,11 +25,12 @@ pks_Entry::~pks_Entry( )
 #endif
 }
 
-pks_Agent::pks_Agent( )
+pks_Agent::pks_Agent( pks_Dataset *dset_ )
 {
 #ifdef _DEBUG2_
    printf("Agent instantiated \n");
 #endif
+   dset = dset_;
 }
 
 pks_Agent::~pks_Agent( )
@@ -225,7 +226,7 @@ int pks_Dataset::makeAgents( void )
       }
 
       if( ifound == -1 ) {
-         pks_Agent a;
+         pks_Agent a( this );
          a.id = isubject;
          agents.push_back( a );
          agents[ agents.size() - 1 ].entries.push_back( &(entries[n]) );

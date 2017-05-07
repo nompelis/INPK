@@ -34,15 +34,19 @@ class pks_Entry {
    int istate;
 };
 
+// a forward declaration so that the agent object can have a parent
+class pks_Dataset;
+
 //
 // Object that is a subject in the study
 //
 class pks_Agent {
  public:
-   pks_Agent();
+   pks_Agent( pks_Dataset *dset_ );
    virtual ~pks_Agent();
 
    int id;
+   pks_Dataset *dset;
    std::vector< pks_Entry * > entries;
 
  protected:
