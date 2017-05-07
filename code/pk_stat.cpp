@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "pk_stat.h"
 
@@ -36,13 +37,61 @@ pks_Agent::pks_Agent( pks_Dataset *dset_ )
 pks_Agent::~pks_Agent( )
 {
    entries.clear();
+   mu.clear();
+   sigma.clear();
+   icnt.clear();
 
 #ifdef _DEBUG2_
    printf("Agent deconstructed \n");
 #endif
 }
 
+void pks_Agent::calcStats( )
+{
+   int ncond = icnt.size();
 
+   // clean-up agent stats
+   for(int k=0;k<ncond;++k) {
+      mu[k] = 0.0;
+      sigma[k] = 0.0;
+      icnt[k] = 0;
+   }
+
+   int ne = entries.size();
+   // loop over all entries and calculate the mean for all conditions
+   for(int n=0;n<ne;++n) {
+      int ic = entries[n]->icondition - 1;
+      if( entries[n]->istate == 0 ) {
+         mu[ic] += entries[n]->dt;
+         icnt[ic] += 1;
+      }
+   }
+   for(int k=0;k<ncond;++k) {
+      mu[k] = mu[k] / ((double) icnt[k]);
+   }
+   // loop over all entries and calculate the variance for all conditions
+   for(int n=0;n<ne;++n) {
+      int ic = entries[n]->icondition - 1;
+      if( entries[n]->istate == 0 ) {
+         double t = entries[n]->dt - mu[ic];
+         sigma[ic] += t*t;
+      }
+   }
+   // calculate the standard deviation for all conditions
+   for(int k=0;k<ncond;++k) {
+      sigma[k] = sqrt( sigma[k] / ((double) icnt[k]) );
+   }
+}
+
+void pks_Agent::showStats( ) const
+{
+   int ncond = icnt.size();
+
+   for(int k=0;k<ncond;++k) {
+      printf(" Condition %2d, (cnt %3d), mean %10.2lf, std.dev. %10.2lf \n", 
+             k, icnt[k], mu[k], sigma[k] );
+   }
+}
 
 
 pks_Dataset::pks_Dataset( int id_, char *fname_ )
@@ -57,6 +106,7 @@ pks_Dataset::pks_Dataset( int id_, char *fname_ )
 
    low_thres = -1.0;
    high_thres = -1.0;
+   ncond = 0;
    nlow = 0;
    nhigh = 0;
 }
@@ -99,7 +149,9 @@ int pks_Dataset::read( void )
       fgets( cdata, LINE_SIZE, fp );
 
       if( cdata[0] != '\0' )  {
+#ifdef _DEBUG2_
          printf("Line %d: %s", n, cdata );
+#endif
          ++n;
 
          pks_Entry e;
@@ -112,9 +164,11 @@ int pks_Dataset::read( void )
 
          entries.push_back( e );
 
+         if( e.icondition > ncond ) ncond = e.icondition;
       }
    }
    printf("Number of lines with data: %d \n", n );
+   printf("Number of conditions in data: %d \n", ncond );
 
    fclose( fp );
 
@@ -160,6 +214,9 @@ int pks_Dataset::resetEntries( void )
    nlow=0;
    nhigh=0;
 
+   int na = agents.size();
+   for(int n=0;n<na;++n) agents[n].calcStats();
+
    return(0);
 }
 
@@ -190,6 +247,13 @@ int pks_Dataset::filterEntries( void )
    printf("After threshold-filtering %d entries...\n", ne );
    printf("   %d were found below the low threshold \n", nlow );
    printf("   %d were found above the high threshold \n", nhigh );
+
+   printf("Calculating agent/subject stats after data filtering \n");
+   int na = agents.size();
+   for(int n=0;n<na;++n) {
+      agents[n].calcStats();
+      agents[n].showStats();
+   }
 
    return(0);
 }
@@ -235,8 +299,21 @@ int pks_Dataset::makeAgents( void )
       }
    }
 
-#ifdef _DEBUG_
+   // create the stats arrays for the agents
    int na = agents.size();
+   for(int n=0;n<na;++n) {
+      for(int m=0;m<ncond;++m) {
+         double dum = 0.0;
+         agents[n].mu.push_back( dum );
+         agents[n].sigma.push_back( dum );
+         int idum = 0;
+         agents[n].icnt.push_back( idum );
+      }
+      agents[n].calcStats();
+      agents[n].showStats();
+   }
+
+#ifdef _DEBUG_
    for(int n=0;n<na;++n) {
       printf(" Agent %d, subject_no %d, entries %ld \n",
              n, agents[n].id, agents[n].entries.size() );
@@ -273,6 +350,7 @@ int enter_thresholds( pks_Dataset & d )
    while( idone != 0 ) {
       printf("Enter thresholds (low and high) separated by a space:\n");
       scanf("%lf %lf", &lowt, &hight );
+//lowt =1000;hight=7000; //HACK
       printf("You have entered: low %lf high %lf \n", lowt,hight );
 
       if( lowt > 0.0 && hight > lowt ) {
@@ -302,14 +380,14 @@ int driver()
    ierr = d.read();
    ierr = d.write( (char *) "crap.csv" );
 
+   // create the agent/subject objects for this dataset
+   ierr = d.makeAgents();
+
    // ask user for thresholds
    enter_thresholds( d );
 
    // fitler based on thresholds
    ierr = d.filterEntries();
-
-   // create the agent/subject objects for this dataset
-   ierr = d.makeAgents();
 
    return(0);
 }

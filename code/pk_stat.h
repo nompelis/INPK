@@ -48,6 +48,11 @@ class pks_Agent {
    int id;
    pks_Dataset *dset;
    std::vector< pks_Entry * > entries;
+   std::vector< double > mu,sigma;
+   std::vector< int > icnt;
+
+   void calcStats();
+   void showStats() const;
 
  protected:
 
@@ -68,6 +73,7 @@ class pks_Dataset {
    char fname[FILENAME_SIZE];
    char header[LINE_SIZE];
    std::vector< pks_Entry > entries;
+   int ncond;
    double low_thres,high_thres;
    int nlow,nhigh;
    std::vector< pks_Agent > agents;

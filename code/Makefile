@@ -20,7 +20,7 @@ COPTS += -DNO_DEBUG2_
 all:
 	$(CXX) -c $(COPTS) pk_stat.cpp
 	$(CC) -c $(COPTS) main.c
-	$(CXX) $(LOPTS) main.o pk_stat.o
+	$(CXX) $(LOPTS) main.o pk_stat.o -lm
 
 
 clean:
